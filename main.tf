@@ -42,22 +42,22 @@ resource "terraform_data" "main" {
 }
 
 
-resource "aws_ec2_instance_state" "catalogue" {
-  instance_id = aws_instance.catalogue.id
+resource "aws_ec2_instance_state" "main" {
+  instance_id = aws_instance.main.id
   state       = "stopped"
-  depends_on = [terraform_data.catalogue]
+  depends_on = [terraform_data.main]
 
 }
 
 
-resource "aws_ami_from_instance" "catalogue" {
-  name               = "${local.common_name}-catalogue-${var.app_version}-${aws_instance.catalogue.id}"
-  source_instance_id = aws_instance.catalogue.id
-  depends_on = [aws_ec2_instance_state.catalogue]
+resource "aws_ami_from_instance" "main" {
+  name               = "${local.common_name}-${var.app_version}-${aws_instance.main.id}"
+  source_instance_id = aws_instance.main.id
+  depends_on = [aws_ec2_instance_state.main]
 
   tags = merge(
     {
-        Name = "${local.common_name}-catalogue-${var.app_version}-${aws_instance.catalogue.id}"
+        Name = "${local.common_name}-${var.app_version}-${aws_instance.main.id}"
     },
     local.common_tags
  )
@@ -65,14 +65,14 @@ resource "aws_ami_from_instance" "catalogue" {
 
 
 
-resource "aws_launch_template" "catalogue" {
-  name = "${local.common_name}-catalogue"
-  image_id = aws_ami_from_instance.catalogue.id
+resource "aws_launch_template" "main" {
+  name = "${local.common_name}"
+  image_id = aws_ami_from_instance.main.id
 
   instance_initiated_shutdown_behavior = "terminate"
 
   instance_type = "t3.micro"
-   vpc_security_group_ids = [local.catalogue_sg_id]
+   vpc_security_group_ids = [local.sg_id]
    update_default_version = true
 
     tag_specifications {
@@ -80,7 +80,7 @@ resource "aws_launch_template" "catalogue" {
 
      tags = merge(
        {
-          Name = "${local.common_name}-catalogue-${var.app_version}-${aws_instance.catalogue.id}"
+          Name = "${local.common_name}-${var.app_version}-${aws_instance.main.id}"
        },
        local.common_tags
 
@@ -93,7 +93,7 @@ resource "aws_launch_template" "catalogue" {
 
      tags = merge(
        {
-          Name = "${local.common_name}-catalogue-${var.app_version}-${aws_instance.catalogue.id}"
+          Name = "${local.common_name}-${var.app_version}-${aws_instance.main.id}"
        },
        local.common_tags
 
@@ -103,7 +103,7 @@ resource "aws_launch_template" "catalogue" {
 
   tags = merge(
        {
-          Name = "${local.common_name}-catalogue-${var.app_version}-${aws_instance.catalogue.id}"
+          Name = "${local.common_name}-${var.app_version}-${aws_instance.main.id}"
        },
        local.common_tags
   )
@@ -111,9 +111,9 @@ resource "aws_launch_template" "catalogue" {
 
 
 
-resource "aws_lb_target_group" "catalogue" {
-  name        = "${local.common_name}-catalogue"
-  port        = 8080
+resource "aws_lb_target_group" "main" {
+  name        = "${local.common_name}" 
+  port        = var.component == "frontend" ? "80" : "8080"
   protocol    = "HTTP"
   vpc_id      = local.vpc_id
   target_type = "instance"
@@ -123,8 +123,8 @@ resource "aws_lb_target_group" "catalogue" {
     healthy_threshold = 2
     interval = 10
     matcher = "200-299"
-    path = "/health"
-    port = 8080
+    path = var.component == "/" ? "80" : "8080"
+    port = var.component == "frontend" ? "80" : "8080"
     protocol = "HTTP"
     timeout = 5
     unhealthy_threshold = 2
@@ -137,8 +137,8 @@ resource "aws_lb_target_group" "catalogue" {
 
 
 
-resource "aws_autoscaling_group" "catalogue" {
-  name                      = "${local.common_name}-catalogue-asg"
+resource "aws_autoscaling_group" "main" {
+  name                      = "${local.common_name}"
   max_size                  = 10
   min_size                  = 1
   health_check_grace_period = 120
@@ -146,12 +146,12 @@ resource "aws_autoscaling_group" "catalogue" {
   desired_capacity          = 2
   force_delete              = false
   launch_template {
-    id      = aws_launch_template.catalogue.id
+    id      = aws_launch_template.main.id
     version = "$Latest"
   }
   vpc_zone_identifier       = [local.private_sub_id]
 
-  target_group_arns = [aws_lb_target_group.catalogue.arn]
+  target_group_arns = [aws_lb_target_group.main.arn]
 
 
     instance_refresh {
@@ -168,7 +168,7 @@ resource "aws_autoscaling_group" "catalogue" {
     dynamic "tag" {
     for_each = merge(
       {
-        Name = "${local.common_name}-catalogue-asg"
+        Name = "${local.common_name}"
       },
       local.common_tags
     )
@@ -186,10 +186,10 @@ resource "aws_autoscaling_group" "catalogue" {
 }
 
 
-resource "aws_autoscaling_policy" "catalogue" {
-  name                   = "${local.common_name}-catalogue-asg"
+resource "aws_autoscaling_policy" "main" {
+  name                   = "${local.common_name}"
   policy_type            = "TargetTrackingScaling"
-  autoscaling_group_name = aws_autoscaling_group.catalogue.name
+  autoscaling_group_name = aws_autoscaling_group.main.name
   estimated_instance_warmup = 120
 
   target_tracking_configuration {
@@ -204,9 +204,9 @@ resource "aws_autoscaling_policy" "catalogue" {
 }
 
 
-resource "aws_lb_listener_rule" "catalogue" {
-  listener_arn = local.backend_alb_listener_arn
-  priority     = 10
+resource "aws_lb_listener_rule" "main" {
+  listener_arn = local.aws_lb_listener_rule
+  priority     = var.rule_priority
 
   action {
     type             = "forward"
