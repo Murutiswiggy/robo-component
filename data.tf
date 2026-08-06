@@ -42,5 +42,5 @@ data "aws_ami" "redhat_ami"{
 }
 
 data "aws_ssm_parameter" "sg_id" {
-  name = "/${var.project}/${var.environment}/${var.component}/sg_id"
+  name = "/${var.project}/${var.environment}/${var.component}_sg_id"
 }
