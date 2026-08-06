@@ -123,7 +123,7 @@ resource "aws_lb_target_group" "main" {
     healthy_threshold = 2
     interval = 10
     matcher = "200-299"
-    path = var.component == "/" ? "80" : "8080"
+    path = var.component == "frontend" ? "/" : "health"
     port = var.component == "frontend" ? "80" : "8080"
     protocol = "HTTP"
     timeout = 5
