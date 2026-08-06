@@ -4,6 +4,8 @@ locals {
   sg_id = data.aws_ssm_parameter.sg_id.value
   backend_alb_listener_arn = data.aws_ssm_parameter.backend_alb_listener_arn.value
   frontend_alb_listener_arn = data.aws_ssm_parameter.frontend_alb_listener_arn.value
+  
+  host_header = var.component == "frontend" ? "${var.project}-${var.environment}.${var.domain_name}" : "${var.component}.backend-alb-${var.environment}.${var.domain_name}"
 
   aws_lb_listener_rule = var.component == "frontend" ? local.backend_alb_listener_arn : local.frontend_alb_listener_arn
 
