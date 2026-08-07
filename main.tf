@@ -227,16 +227,16 @@ resource "aws_lb_listener_rule" "main" {
 }
 
 
-resource "terraform_data" "main_detestion" {
-  triggers_replace = [
-    aws_instance.main.id
-    ]
+# resource "terraform_data" "main_detestion" {
+#   triggers_replace = [
+#     aws_instance.main.id
+#     ]
 
-  depends_on = [ aws_autoscaling_policy.main]
+#   depends_on = [ aws_autoscaling_policy.main]
 
-  provisioner "local-exec" {
-    command = "aws ec2 terminate-instances --instance-ids ${aws_instance.main.id}"
+#   provisioner "local-exec" {
+#     command = "aws ec2 terminate-instances --instance-ids ${aws_instance.main.id}"
     
-  }
-}
+#   }
+# }
 
