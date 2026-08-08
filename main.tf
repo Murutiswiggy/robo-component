@@ -3,7 +3,7 @@ resource "aws_instance" "main" {
   instance_type               = "t3.micro"
   subnet_id                   = local.private_sub_id
   vpc_security_group_ids      = [local.sg_id]
-  associate_public_ip_address = true
+
 
 
     tags = merge(
@@ -112,7 +112,7 @@ resource "aws_launch_template" "main" {
 
 
 resource "aws_lb_target_group" "main" {
-  name        = "${local.common_name}" 
+  name        = "${local.common_name}-tg" 
   port        = var.component == "frontend" ? "80" : "8080"
   protocol    = "HTTP"
   vpc_id      = local.vpc_id
@@ -213,15 +213,10 @@ resource "aws_lb_listener_rule" "main" {
     target_group_arn = aws_lb_target_group.main.arn
   }
 
-  condition {
-    path_pattern {
-      values = ["/static/*"]
-    }
-  }
 
   condition {
     host_header {
-      values = ["catalogue.backend-alb-${var.environment}.${var.domain_name}"]
+      values = [local.host_header]
     }
   }
 }
