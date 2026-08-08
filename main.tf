@@ -8,7 +8,7 @@ resource "aws_instance" "main" {
 
     tags = merge(
     {
-        Name = "${local.common_name}"
+        Name = "${local.common_name}-main"
     },
     local.common_tags
   )
@@ -42,6 +42,9 @@ resource "terraform_data" "main" {
 }
 
 
+
+
+
 resource "aws_ec2_instance_state" "main" {
   instance_id = aws_instance.main.id
   state       = "stopped"
@@ -66,7 +69,7 @@ resource "aws_ami_from_instance" "main" {
 
 
 resource "aws_launch_template" "main" {
-  name = "${local.common_name}"
+  name = "${local.common_name}-main"
   image_id = aws_ami_from_instance.main.id
 
   instance_initiated_shutdown_behavior = "terminate"
@@ -138,7 +141,7 @@ resource "aws_lb_target_group" "main" {
 
 
 resource "aws_autoscaling_group" "main" {
-  name                      = "${local.common_name}"
+  name                      = "${local.common_name}-main"
   max_size                  = 10
   min_size                  = 1
   health_check_grace_period = 120
@@ -168,7 +171,7 @@ resource "aws_autoscaling_group" "main" {
     dynamic "tag" {
     for_each = merge(
       {
-        Name = "${local.common_name}"
+        Name = "${local.common_name}-main"
       },
       local.common_tags
     )
@@ -187,7 +190,7 @@ resource "aws_autoscaling_group" "main" {
 
 
 resource "aws_autoscaling_policy" "main" {
-  name                   = "${local.common_name}"
+  name                   = "${local.common_name}-main"
   policy_type            = "TargetTrackingScaling"
   autoscaling_group_name = aws_autoscaling_group.main.name
   estimated_instance_warmup = 120
