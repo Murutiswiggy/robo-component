@@ -115,7 +115,7 @@ resource "aws_launch_template" "main" {
 
 
 resource "aws_lb_target_group" "main" {
-  name        = "${local.common_name}-tg" 
+  name        = "${local.common_name}-main" 
   port        = var.component == "frontend" ? "80" : "8080"
   protocol    = "HTTP"
   vpc_id      = local.vpc_id
