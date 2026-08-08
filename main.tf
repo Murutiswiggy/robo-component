@@ -142,7 +142,7 @@ resource "aws_lb_target_group" "main" {
 
 resource "aws_autoscaling_group" "main" {
   name                      = "${local.common_name}-main"
-  max_size                  = 10
+  max_size                  = 5
   min_size                  = 1
   health_check_grace_period = 120
   health_check_type         = "ELB"
@@ -225,16 +225,16 @@ resource "aws_lb_listener_rule" "main" {
 }
 
 
-# resource "terraform_data" "main_detestion" {
-#   triggers_replace = [
-#     aws_instance.main.id
-#     ]
+resource "terraform_data" "main_detestion" {
+  triggers_replace = [
+    aws_instance.main.id
+    ]
 
-#   depends_on = [ aws_autoscaling_policy.main]
+  depends_on = [ aws_autoscaling_policy.main]
 
-#   provisioner "local-exec" {
-#     command = "aws ec2 terminate-instances --instance-ids ${aws_instance.main.id}"
+  provisioner "local-exec" {
+    command = "aws ec2 terminate-instances --instance-ids ${aws_instance.main.id}"
     
-#   }
-# }
+  }
+}
 
